@@ -82,6 +82,7 @@ class Database(local, NodeClassRegistry):
         self.url = None
         self.driver = None
         self._pid = None
+        self.database = config.DATABASE_NAME
 
     def set_connection(self, url):
         """
@@ -100,6 +101,8 @@ class Database(local, NodeClassRegistry):
                                            auth=basic_auth(username, password),
                                            encrypted=config.ENCRYPTED_CONNECTION,
                                            max_connection_pool_size=config.MAX_CONNECTION_POOL_SIZE)
+        
+        self.database = config.DATABASE_NAME
         self.url = url
         self._pid = os.getpid()
         self._active_transaction = None
@@ -126,7 +129,7 @@ class Database(local, NodeClassRegistry):
         """
         if self._active_transaction:
             raise SystemError("Transaction in progress")
-        self._active_transaction = self.driver.session(default_access_mode=access_mode).begin_transaction()
+        self._active_transaction = self.driver.session(default_access_mode=access_mode, database=self.database).begin_transaction()
 
     @ensure_connection
     def commit(self):
@@ -209,7 +212,7 @@ class Database(local, NodeClassRegistry):
         if self._active_transaction:
             session = self._active_transaction
         else:
-            session = self.driver.session()
+            session = self.driver.session(database=self.database)
 
         try:
             # Retrieve the data
