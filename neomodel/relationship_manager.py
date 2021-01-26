@@ -83,7 +83,11 @@ class RelationshipManager(object):
             tmp = rel_model(**properties) if properties else rel_model()
             # build params and place holders to pass to rel_helper
             for p, v in rel_model.deflate(tmp.__properties__).items():
-                if v is not None:
+                if isinstance(v, dict):
+                    vv = v["format"].format(p)
+                    v = v["value"]
+                    rp[p] = vv
+                elif v is not None:
                     rp[p] = '$' + p
                 else:
                     rp[p] = None
